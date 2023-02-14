@@ -1,4 +1,6 @@
 pub mod authorization;
+pub mod service;
+pub type BucketList = Vec<(String, String, String)>;
 
 /// aliyun oss AccessKey
 ///
@@ -15,6 +17,19 @@ pub mod authorization;
 pub struct Auth {
     pub accesskeyid: String,
     pub accesskeysecret: String,
+}
+
+impl Auth {
+    pub fn new(accesskeyid: &str, accesskeysecret: &str) -> Self {
+        Auth {
+            accesskeyid: accesskeyid.to_string(),
+            accesskeysecret: accesskeysecret.to_string(),
+        }
+    }
+
+    pub fn list_bucket(&self) -> BucketList {
+        service::list_bucket(self)
+    }
 }
 
 /// Information needed to operate the bucket
