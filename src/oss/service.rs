@@ -4,51 +4,52 @@ use super::{
     authorization::{
         construct_headers, create_authorization, create_datetime, create_host, create_url,
     },
-    Auth, BucketList,
+    Auth,
 };
+
 #[derive(Serialize, Deserialize, Debug)]
-struct ListAllMyBucketsResult {
+pub struct ListAllMyBucketsResult {
     #[serde(rename = "Owner")]
-    owner: Owner,
+    pub owner: Owner,
     #[serde(rename = "Buckets")]
-    buckets: Buckets,
+    pub buckets: Buckets,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Owner {
+pub struct Owner {
     #[serde(rename = "ID")]
-    id: String,
+    pub id: String,
     #[serde(rename = "DisplayName")]
-    display_name: String,
+    pub display_name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Buckets {
+pub struct Buckets {
     #[serde(rename = "Bucket")]
-    bucket: Vec<Bucket>,
+    pub bucket: Vec<BucketInfo>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Bucket {
+pub struct BucketInfo {
     #[serde(rename = "Comment")]
-    comment: String,
+    pub comment: String,
     #[serde(rename = "CreationDate")]
-    creation_date: String,
+    pub creation_date: String,
     #[serde(rename = "ExtranetEndpoint")]
-    extranet_endpoint: String,
+    pub extranet_endpoint: String,
     #[serde(rename = "IntranetEndpoint")]
-    intranet_endpoint: String,
+    pub intranet_endpoint: String,
     #[serde(rename = "Location")]
-    location: String,
+    pub location: String,
     #[serde(rename = "Name")]
-    name: String,
+    pub name: String,
     #[serde(rename = "Region")]
-    region: String,
+    pub region: String,
     #[serde(rename = "StorageClass")]
-    storage_class: String,
+    pub storage_class: String,
 }
 
-pub fn list_bucket(auth: &Auth) -> BucketList {
+pub fn list_bucket(auth: &Auth) -> Vec<BucketInfo> {
     // The default endpoint of list_bucket is "oss-cn-hangzhou".
     let host = create_host(None, "oss-cn-hangzhou");
     let url = create_url(&host);
@@ -71,11 +72,11 @@ pub fn list_bucket(auth: &Auth) -> BucketList {
     parse_bucket_info(&res)
 }
 
-pub fn parse_bucket_info(xml: &str) -> Vec<(String, String, String)> {
+pub fn parse_bucket_info(xml: &str) -> Vec<BucketInfo> {
     let bucketlist: ListAllMyBucketsResult = serde_xml_rs::from_str(xml).unwrap();
     let mut result = vec![];
     for bucket in bucketlist.buckets.bucket {
-        result.push((bucket.location, bucket.name, bucket.region));
+        result.push(bucket);
     }
     result
 }

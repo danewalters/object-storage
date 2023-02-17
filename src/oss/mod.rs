@@ -1,6 +1,5 @@
 pub mod authorization;
 pub mod service;
-pub type BucketList = Vec<(String, String, String)>;
 
 /// aliyun oss AccessKey
 ///
@@ -27,7 +26,7 @@ impl Auth {
         }
     }
 
-    pub fn list_bucket(&self) -> BucketList {
+    pub fn list_bucket(&self) -> Vec<service::BucketInfo> {
         service::list_bucket(self)
     }
 }
