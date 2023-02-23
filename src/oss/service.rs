@@ -1,11 +1,16 @@
-use serde::{Deserialize, Serialize};
-
 use super::{
-    authorization::{
-        construct_headers, create_authorization, create_datetime, create_host, create_url,
+    util::{
+        authorization::create_authorization,
+        datetime::create_datetime,
+        headers::construct_headers,
+        host::{create_host, create_url},
+        request::request,
     },
     Auth,
 };
+use anyhow::{Ok, Result};
+use reqwest::Method;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ListAllMyBucketsResult {
@@ -49,34 +54,17 @@ pub struct BucketInfo {
     pub storage_class: String,
 }
 
-pub fn list_bucket(auth: &Auth) -> Vec<BucketInfo> {
-    // The default endpoint of list_bucket is "oss-cn-hangzhou".
-    let host = create_host(None, "oss-cn-hangzhou");
-    let url = create_url(&host);
-    let verb = "GET";
-    let content = None;
-    let datetime = create_datetime();
-    let caon_header = None;
-    let caon_resource = "/";
-    let authorization =
-        create_authorization(auth, verb, content, &datetime, caon_header, caon_resource);
-    let headers = construct_headers(None, None, &host, &datetime, &authorization);
-    let client = reqwest::blocking::Client::new();
-    let res = client
-        .get(url)
-        .headers(headers)
-        .send()
-        .unwrap()
-        .text()
-        .unwrap();
-    parse_bucket_info(&res)
+pub async fn list_bucket(auth: &Auth) -> Result<Vec<BucketInfo>> {
+    let host = create_host(None, "oss-cn-hangzhou").await?;
+    let url = create_url(&host).await?;
+    let datetime = create_datetime().await?;
+    let authorization = create_authorization(auth, "GET", None, &datetime, None, "/").await?;
+    let headers = construct_headers(None, None, &host, &datetime, &authorization).await;
+    let text = request(Method::GET, &url, headers, None).await?;
+    parse_bucket_info(&text).await
 }
 
-pub fn parse_bucket_info(xml: &str) -> Vec<BucketInfo> {
-    let bucketlist: ListAllMyBucketsResult = serde_xml_rs::from_str(xml).unwrap();
-    let mut result = vec![];
-    for bucket in bucketlist.buckets.bucket {
-        result.push(bucket);
-    }
-    result
+pub async fn parse_bucket_info(xml: &str) -> Result<Vec<BucketInfo>> {
+    let bucketlist: ListAllMyBucketsResult = serde_xml_rs::from_str(xml)?;
+    Ok(bucketlist.buckets.bucket)
 }
