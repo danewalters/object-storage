@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Ok, Result};
 
 pub async fn create_host(bucket_name: Option<&str>, endpoint: &str) -> Result<String> {
     let base_url = format!("{}.{}", endpoint, "aliyuncs.com");
@@ -9,7 +9,15 @@ pub async fn create_host(bucket_name: Option<&str>, endpoint: &str) -> Result<St
     Ok(host)
 }
 
-pub async fn create_url(host: &str) -> Result<String> {
-    let url = format!("https://{}", host);
+pub async fn create_url(host: &str, file_name: Option<&str>) -> Result<String> {
+    let base_url = format!("https://{}", host);
+    let url = match file_name {
+        Some(file_name) => format!("{}/{}", base_url, file_name),
+        None => base_url,
+    };
     Ok(url)
+}
+
+pub async fn create_resource(bucket_name: &str, object_name: &str) -> Result<String> {
+    Ok(format!("/{}/{}", bucket_name, object_name))
 }

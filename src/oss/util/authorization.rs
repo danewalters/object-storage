@@ -1,6 +1,6 @@
 use super::crypto::auth_sh1;
 use crate::oss::{Auth, Content};
-use anyhow::{Ok, Result};
+use anyhow::{anyhow, Result};
 pub async fn create_authorization(
     auth: &Auth,
     verb: &str,
@@ -9,16 +9,17 @@ pub async fn create_authorization(
     caon_header: Option<&str>,
     caon_resource: &str,
 ) -> Result<String> {
-    if let Some(_content) = content {
-        panic!("Currently does not support validating the hash of uploaded files");
-    }
+    let (md5, content_type) = match content {
+        Some(content) => (content.content_md5.as_str(), content.content_type.as_str()),
+        None => ("", ""),
+    };
+    let caon_header = caon_header.unwrap_or("");
     let data = format!(
-        "{}\n\n\n{}\n{}{}",
-        verb,
-        datetime,
-        caon_header.unwrap_or_default(),
-        caon_resource
+        "{}\n{}\n{}\n{}\n{}{}",
+        verb, md5, content_type, datetime, caon_header, caon_resource
     );
-    let hash = auth_sh1(auth.accesskeysecret.as_bytes(), &data).await?;
+    let hash = auth_sh1(auth.accesskeysecret.as_bytes(), data.as_bytes())
+        .await
+        .map_err(|e| anyhow!("Failed to compute auth hash: {}", e))?;
     Ok(format!("OSS {}:{}", auth.accesskeyid, hash))
 }

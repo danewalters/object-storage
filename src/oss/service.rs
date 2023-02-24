@@ -56,10 +56,10 @@ pub struct BucketInfo {
 
 pub async fn list_bucket(auth: &Auth) -> Result<Vec<BucketInfo>> {
     let host = create_host(None, "oss-cn-hangzhou").await?;
-    let url = create_url(&host).await?;
+    let url = create_url(&host, None).await?;
     let datetime = create_datetime().await?;
     let authorization = create_authorization(auth, "GET", None, &datetime, None, "/").await?;
-    let headers = construct_headers(None, None, &host, &datetime, &authorization).await;
+    let headers = construct_headers(None, None, None, &host, &datetime, &authorization).await;
     let text = request(Method::GET, &url, headers, None).await?;
     parse_bucket_info(&text).await
 }
